@@ -13,14 +13,18 @@ BY=> Oseid Aldary
 try:
 
    import socket,dns.resolver,optparse,subprocess,multiprocessing
-   from json import load; from urllib2 import urlopen; from copy import copy; from os import devnull; from time import sleep as se; from os import system as sy
-
+   from json import load; from urllib2 import urlopen; from copy import copy; from os import devnull,popen,system as sy; from time import sleep as se; from sys import platform as useros
 except KeyboardInterrupt:
         print("[!] Something Went Wrong!\n[>] Please Try Again :)")
         exit(1)
-except:
-     print("Some Modules Is Missing In Your Python !!!\n")
-     print("[1] Dnspython> pip install dnspython\n[2] Json> pip install simplejson")
+except ImportError, e:
+     e = e[0][16:]
+     if e =="json":
+		e = "simplejson"
+     elif e=="dns":
+	e = "dnspython"
+		
+     print("[!] Error: ["+e+"] Module Is Missing !!!\n[*] Please Install It Using This Command: pip install "+e)
      exit(1)
 from Core.examples import examp
 ## Check Internet Connection.....
@@ -40,11 +44,12 @@ check = check()
 
 #1: Find User Local IP address
 def locip():
-  try:
-     locip = [(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]
-     return locip
-  except:
-	return "[!] Error Your Not Connect To Any Network !!!\n[!] Please Check Your Connection!"
+	locip = ''.join(socket.gethostbyname_ex(socket.gethostname())[2])
+	if locip !="127.0.0.1":
+		return locip
+	else:
+		return False
+	
 #2: Find User Puplic IP Address
 def pupip():
  if check == True:
@@ -54,8 +59,8 @@ def pupip():
    print("[!] Error: Your Not Connect To Internet !!!\n[!] Please Check Your Internet Connection!")
    exit(1)
 #3: Find Network Hosts
-
-def pinger(job_q, results_q):
+if useros in ["linux", "linux2"]:
+ def pinger(job_q, results_q):
     DEVNULL = open(devnull, 'w')
     while True:
 
@@ -70,12 +75,17 @@ def pinger(job_q, results_q):
             results_q.put(ip)
         except:
             pass
-def map_network(pool_size=255):
- try:
+ def map_network(pool_size=255):
+  try:
     ip_list = list()
 
     # get my IP and compose a base like 192.168.1.xxx
-    ip_parts = locip().split('.')
+    if locip() !=False:
+	ip_parts = locip().split('.')
+    else:
+	print("\n[!] Error Your Not Connect To Any Network !!!\n[!] Please Check Your Connection!")
+	exit(1)
+
     base_ip = ip_parts[0] + '.' + ip_parts[1] + '.' + ip_parts[2] + '.'
 
     # prepare the jobs queue
@@ -104,8 +114,21 @@ def map_network(pool_size=255):
 
     return ip_list
 
- except:
-    return "[!] Error Your Not Connect To Any Network !!!\n[!] Please Check Your Connection!"
+  except Exception, e:
+    return False
+elif useros in ["win32","win64"]:
+	def map_network():
+		locip = ''.join(socket.gethostbyname_ex(socket.gethostname())[2])
+		if locip !="127.0.0.1":
+			gtw = locip[:-2]
+			ip_list = []
+			for i in range(1,255):
+				data = popen('ping -n 1 {}.{} |findstr "Reply from"'.format(gtw,i)).read()
+				if "Reply from" in data and "Destination host unreachable." not in data:
+					ip_list.append(gtw+"."+str(i))
+			return ip_list
+		else:
+			return False
 
 ########################
 
@@ -389,7 +412,7 @@ def main():
 	pupip()
   elif options.network:
 	ips_list = map_network()
-	if ips_list !="[!] Error Your Not Connect To Any Network !!!\n[!] Please Check Your Connection!":
+	if ips_list !=False:
           print("Mapping...")
 	  se(1)
           loop = 1
@@ -403,7 +426,8 @@ def main():
           result = loop -1
           print("\nI Found <{}> Device In Network !".format(result))
         else:
-	  print(ips_list)
+	  print("[!] Error Your Not Connect To Any Network !!!\n[!] Please Check Your Connection!")
+	  exit(1)
 
   elif options.ve:
 	print("\n[>] Version>> 1.0\nWait New Version Soon :)")
