@@ -21,11 +21,12 @@ except ImportError, e:
      e = e[0][16:]
      if e =="json":
 		e = "simplejson"
-     elif e=="dns":
+     elif e=="dns.resolver":
 	e = "dnspython"
 		
      print("[!] Error: ["+e+"] Module Is Missing !!!\n[*] Please Install It Using This Command: pip install "+e)
      exit(1)
+sy("cls||clear")
 from Core.examples import examp
 ## Check Internet Connection.....
 server = "www.google.com"
@@ -76,6 +77,7 @@ if useros in ["linux", "linux2"]:
         except:
             pass
  def map_network(pool_size=255):
+  print("Mapping...")
   try:
     ip_list = list()
 
@@ -122,11 +124,15 @@ elif useros in ["win32","win64"]:
 		if locip !="127.0.0.1":
 			gtw = locip[:-2]
 			ip_list = []
-			for i in range(1,255):
-				data = popen('ping -n 1 {}.{} |findstr "Reply from"'.format(gtw,i)).read()
-				if "Reply from" in data and "Destination host unreachable." not in data:
-					ip_list.append(gtw+"."+str(i))
-			return ip_list
+			print("Mapping...")
+			try:
+                           for i in range(1,255):
+                              data = popen('ping -n 1 {}.{} |findstr "Reply from"'.format(gtw,i)).read()
+                              if "Reply from" in data and "Destination host unreachable." not in data:
+                                 ip_list.append(gtw+"."+str(i))
+                           return ip_list
+                        except KeyboardInterrupt:
+                           return ip_list
 		else:
 			return False
 
@@ -413,16 +419,17 @@ def main():
   elif options.network:
 	ips_list = map_network()
 	if ips_list !=False:
-          print("Mapping...")
 	  se(1)
           loop = 1
           up = "UP"
+          
           print("======================================")
           print("ID\t\tIP\t\tSTATUS")
           print("==\t\t==\t\t======")
           for ip in ips_list:
             print("{}\t   {}    \t  {}".format(loop,ip,copy(up)))
             loop +=1
+            
           result = loop -1
           print("\nI Found <{}> Device In Network !".format(result))
         else:
@@ -456,4 +463,3 @@ if __name__=="__main__":
 #This Tool by Oseid Aldary
 #Have a nice day :)
 #GoodBye
-
